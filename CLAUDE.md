@@ -8,6 +8,9 @@ Mobile-first PWA for logging routine activities ("kapan terakhir ganti sprei?").
 - Auth: Google via Socialite, session cookies via Sanctum `statefulApi()`. No passwords.
 - `routes/web.php` ends with a catch-all that serves `resources/views/app.blade.php`; add web routes above it and keep `api/`, `auth/` excluded.
 - Users must accept the current `config('catatan.terms_version')` before using the app; the Vue router redirects to `/persetujuan` until they do.
+- Data model: every user gets a personal `Household` (`User::currentHousehold()`); `Activity` belongs to a household, `Entry` to an activity. Always scope queries through the user's household.
+- Entries carry a client-generated UUID so retries (and later offline sync) are idempotent. Times are stored in UTC; calendar stats take the viewer's `tz` query param.
+- API routes that touch household data sit behind the `terms` middleware.
 - SQLite for local dev and tests, MySQL in production.
 
 ## Commands

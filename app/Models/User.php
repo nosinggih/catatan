@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -67,5 +68,28 @@ class User extends Authenticatable
             'terms_accepted_at' => now(),
             'terms_version' => config('catatan.terms_version'),
         ])->save();
+    }
+
+    public function households(): BelongsToMany
+    {
+        return $this->belongsToMany(Household::class, 'household_members')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * The household the user is working in. Every user gets a personal
+     * household the first time it is needed.
+     */
+    public function currentHousehold(): Household
+    {
+        if ($household = $this->households()->oldest('household_members.id')->first()) {
+            return $household;
+        }
+
+        $household = Household::create(['name' => 'Rumah '.$this->name]);
+        $household->members()->attach($this->id, ['role' => 'owner']);
+
+        return $household;
     }
 }
