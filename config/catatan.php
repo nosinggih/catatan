@@ -58,4 +58,11 @@ return [
 
     'default_icon' => '📌',
 
+    /*
+    | Reminders are only pushed between these hours (24h, in this timezone)
+    | so nobody gets woken up at night.
+    */
+    'reminder_timezone' => 'Asia/Jakarta',
+    'reminder_hours' => [7, 20],
+
 ];

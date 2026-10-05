@@ -17,6 +17,14 @@ class Activity extends Model
 
     protected $fillable = ['name', 'icon', 'reminder_interval_days'];
 
+    protected function casts(): array
+    {
+        return [
+            'reminder_interval_days' => 'integer',
+            'reminded_at' => 'datetime',
+        ];
+    }
+
     protected static function booted(): void
     {
         static::saving(function (Activity $activity) {
@@ -72,6 +80,19 @@ class Activity extends Model
             ->withMin('entries as first_entry_at', 'occurred_at')
             ->withMax('entries as last_entry_at', 'occurred_at')
             ->withSum('entries as total_cost', 'cost');
+    }
+
+    /**
+     * When the activity is due again, or null without a reminder or entries.
+     * Requires last_entry_at (see scopeWithStats).
+     */
+    public function nextDueAt(): ?Carbon
+    {
+        if (! $this->reminder_interval_days || ! $this->last_entry_at) {
+            return null;
+        }
+
+        return Carbon::parse($this->last_entry_at)->addDays($this->reminder_interval_days);
     }
 
     /**

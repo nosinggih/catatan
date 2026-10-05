@@ -12,7 +12,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Catatan">
     <script>
-        window.CATATAN = @json(['devLogin' => \App\Http\Controllers\Auth\DevLoginController::enabled()]);
+        window.CATATAN = @json([
+            'devLogin' => \App\Http\Controllers\Auth\DevLoginController::enabled(),
+            'vapidPublicKey' => config('webpush.vapid.public_key'),
+        ]);
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

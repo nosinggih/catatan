@@ -8,6 +8,8 @@ import { search } from '../lib/match';
 import AddActivitySheet from '../components/AddActivitySheet.vue';
 import EntrySheet from '../components/EntrySheet.vue';
 import TemplatePicker from '../components/TemplatePicker.vue';
+import InstallGuide from '../components/InstallGuide.vue';
+import { enablePush, isIos, isStandalone, pushPermission } from '../lib/push';
 
 const auth = useAuthStore();
 const store = useActivitiesStore();
@@ -22,12 +24,28 @@ const installPrompt = ref(null);
 let toastTimer;
 
 const visible = computed(() => search(query.value, store.items));
+const permission = ref(pushPermission());
+const now = ref(Date.now());
+const isDue = (activity) => activity.stats.next_due_at && new Date(activity.stats.next_due_at).getTime() <= now.value;
+// Offer notifications once the user has set a reminder somewhere.
+const askNotifications = computed(
+    () =>
+        permission.value === 'default' &&
+        !(isIos() && !isStandalone()) &&
+        store.items.some((a) => a.reminder_interval_days),
+);
+
+async function turnOnNotifications() {
+    await enablePush().catch(() => false);
+    permission.value = pushPermission();
+}
 
 async function log(activity) {
     error.value = '';
     clearTimeout(toastTimer);
     try {
         const entry = await store.log(activity);
+        now.value = Date.now();
         toast.value = { activity, entry };
         toastTimer = setTimeout(() => (toast.value = null), 6000);
         query.value = '';
@@ -69,6 +87,7 @@ async function logout() {
 }
 
 onMounted(() => {
+    now.value = Date.now();
     store.load();
     window.addEventListener('beforeinstallprompt', captureInstallPrompt);
 });
@@ -92,6 +111,27 @@ onBeforeUnmount(() => {
             @click="install"
         >
             Pasang aplikasi di layar utama
+        </button>
+
+        <InstallGuide />
+
+        <p
+            v-if="store.offline || store.queue.length"
+            role="status"
+            class="mx-2 mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"
+        >
+            {{ store.offline ? 'Offline' : 'Mengirim' }}<template v-if="store.queue.length">
+                · {{ store.queue.length }} catatan menunggu dikirim</template
+            ><template v-else>. Catatan tetap tersimpan dan dikirim saat online.</template>
+        </p>
+
+        <button
+            v-if="askNotifications"
+            type="button"
+            class="mx-2 mt-4 h-12 rounded-2xl border border-teal-700 font-medium text-teal-800"
+            @click="turnOnNotifications"
+        >
+            🔔 Aktifkan notifikasi pengingat
         </button>
 
         <p v-if="!store.loaded" class="mt-10 text-center text-stone-500">Memuat…</p>
@@ -122,6 +162,12 @@ onBeforeUnmount(() => {
                         @click="log(activity)"
                     >
                         <span class="text-3xl" aria-hidden="true">{{ activity.icon }}</span>
+                        <span
+                            v-if="isDue(activity)"
+                            class="absolute top-4 right-12 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900"
+                        >
+                            Sudah waktunya
+                        </span>
                         <span>
                             <span class="line-clamp-2 leading-tight font-medium">{{ activity.name }}</span>
                             <span class="mt-1 block text-sm text-stone-500">
@@ -161,7 +207,9 @@ onBeforeUnmount(() => {
             role="status"
             class="fixed inset-x-4 bottom-24 z-30 mx-auto flex max-w-md items-center gap-2 rounded-2xl bg-stone-900 p-3 pl-4 text-white shadow-lg"
         >
-            <span class="flex-1 truncate">Tersimpan: {{ toast.activity.icon }} {{ toast.activity.name }}</span>
+            <span class="flex-1 truncate">
+                {{ toast.entry.pending ? 'Tersimpan di HP' : 'Tersimpan' }}: {{ toast.activity.icon }} {{ toast.activity.name }}
+            </span>
             <button type="button" class="rounded-xl px-3 py-2 font-medium text-teal-300" @click="openDetails">
                 Detail
             </button>

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import BottomSheet from './BottomSheet.vue';
 import { isSameName, search } from '../lib/match';
 import { useActivitiesStore } from '../stores/activities';
+import { isOffline } from '../lib/storage';
 
 const props = defineProps({ initialName: { type: String, default: '' } });
 const emit = defineEmits(['close', 'log']);
@@ -23,7 +24,9 @@ async function add(logNow) {
         emit('close');
         if (logNow) emit('log', store.byId(activity.id));
     } catch (e) {
-        error.value = e.response?.data?.message ?? 'Gagal menyimpan.';
+        error.value = isOffline(e)
+            ? 'Sedang offline. Kegiatan baru bisa ditambah setelah online.'
+            : (e.response?.data?.message ?? 'Gagal menyimpan.');
     } finally {
         saving.value = false;
     }

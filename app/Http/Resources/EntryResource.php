@@ -21,6 +21,7 @@ class EntryResource extends JsonResource
             'note' => $this->note,
             'cost' => $this->cost,
             'location_name' => $this->location_name,
+            'photo_url' => $this->photo_path ? "/api/entries/{$this->uuid}/photo?v={$this->updated_at->timestamp}" : null,
             'user' => $this->whenLoaded('user', fn () => ['id' => $this->user->id, 'name' => $this->user->name]),
         ];
     }
