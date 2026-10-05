@@ -3,6 +3,7 @@ import { useAuthStore } from './stores/auth';
 import HomePage from './pages/HomePage.vue';
 import LoginPage from './pages/LoginPage.vue';
 import ConsentPage from './pages/ConsentPage.vue';
+import ActivityPage from './pages/ActivityPage.vue';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -10,6 +11,7 @@ const router = createRouter({
         { path: '/', name: 'home', component: HomePage },
         { path: '/masuk', name: 'login', component: LoginPage, meta: { guest: true } },
         { path: '/persetujuan', name: 'consent', component: ConsentPage },
+        { path: '/kegiatan/:id(\\d+)', name: 'activity', component: ActivityPage, props: true },
         { path: '/:pathMatch(.*)*', redirect: '/' },
     ],
 });

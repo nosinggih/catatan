@@ -63,4 +63,5 @@ vendor/bin/pint --test
 | Halaman Vue | `resources/js/pages/` |
 | Router dan guard login/persetujuan | `resources/js/router.js` |
 | Manifest, service worker, ikon | `public/manifest.webmanifest`, `public/sw.js`, `public/icons/` |
-| Versi teks persetujuan | `config/catatan.php` (`terms_version`) |
+| Versi teks persetujuan, template kegiatan, ikon otomatis | `config/catatan.php` |
+| Model data (rumah, kegiatan, catatan) | `app/Models/` |
