@@ -19,10 +19,12 @@ return [
     */
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
+        '%s%s%s',
         'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
         Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
+        // The SPA is always served from the same host as the API, so trust
+        // whatever host/port the app is running on (e.g. artisan serve --port=8001).
+        Sanctum::currentRequestHost(),
     ))),
 
     /*
