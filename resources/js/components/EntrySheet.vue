@@ -1,7 +1,9 @@
 <script setup>
 import { reactive, ref } from 'vue';
+import axios from 'axios';
 import BottomSheet from './BottomSheet.vue';
 import { fromLocalInput, toLocalInput } from '../lib/format';
+import { compressImage } from '../lib/image';
 
 const props = defineProps({
     entry: { type: Object, required: true },
@@ -10,7 +12,7 @@ const props = defineProps({
     // Declared as a prop so the parent's @save handler can be awaited.
     onSave: { type: Function, required: true },
 });
-const emit = defineEmits(['delete', 'close']);
+const emit = defineEmits(['delete', 'close', 'photo']);
 
 const form = reactive({
     occurred_at: toLocalInput(props.entry.occurred_at),
@@ -20,6 +22,39 @@ const form = reactive({
 });
 const saving = ref(false);
 const error = ref('');
+const photoUrl = ref(props.entry.photo_url ?? null);
+const uploading = ref(false);
+const photoInput = ref(null);
+
+async function uploadPhoto(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    uploading.value = true;
+    error.value = '';
+    try {
+        const body = new FormData();
+        body.append('photo', await compressImage(file));
+        const { data } = await axios.post(`/api/entries/${props.entry.uuid}/photo`, body);
+        photoUrl.value = data.data.photo_url;
+        emit('photo', data.data);
+    } catch (e) {
+        error.value = e.response?.data?.message ?? 'Gagal mengunggah foto. Periksa koneksi lalu coba lagi.';
+    } finally {
+        uploading.value = false;
+    }
+}
+
+async function removePhoto() {
+    if (!confirm('Hapus foto ini?')) return;
+    try {
+        const { data } = await axios.delete(`/api/entries/${props.entry.uuid}/photo`);
+        photoUrl.value = null;
+        emit('photo', data.data);
+    } catch {
+        error.value = 'Gagal menghapus foto.';
+    }
+}
 
 async function save() {
     saving.value = true;
@@ -82,6 +117,33 @@ async function save() {
                         class="mt-1 h-12 w-full rounded-xl border border-stone-300 px-3"
                     />
                 </label>
+            </div>
+
+            <div>
+                <span class="text-sm text-stone-600">Foto</span>
+                <p v-if="entry.pending" class="mt-1 text-sm text-stone-500">Foto bisa ditambah setelah online.</p>
+                <div v-else-if="photoUrl" class="mt-1 flex items-end gap-3">
+                    <img :src="photoUrl" alt="Foto catatan" class="h-24 w-24 rounded-xl object-cover" />
+                    <button type="button" class="h-10 text-sm text-teal-800" @click="photoInput.click()">Ganti</button>
+                    <button type="button" class="h-10 text-sm text-red-700" @click="removePhoto">Hapus foto</button>
+                </div>
+                <button
+                    v-else
+                    type="button"
+                    :disabled="uploading"
+                    class="mt-1 h-12 w-full rounded-xl border border-dashed border-stone-400 text-stone-600"
+                    @click="photoInput.click()"
+                >
+                    {{ uploading ? 'Mengunggah…' : '📷 Tambah foto' }}
+                </button>
+                <input
+                    ref="photoInput"
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    data-testid="photo-input"
+                    @change="uploadPhoto"
+                />
             </div>
 
             <p v-if="error" class="text-sm text-red-700">{{ error }}</p>

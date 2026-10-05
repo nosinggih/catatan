@@ -11,6 +11,9 @@ Mobile-first PWA for logging routine activities ("kapan terakhir ganti sprei?").
 - Data model: every user gets a personal `Household` (`User::currentHousehold()`); `Activity` belongs to a household, `Entry` to an activity. Always scope queries through the user's household.
 - Entries carry a client-generated UUID so retries (and later offline sync) are idempotent. Times are stored in UTC; calendar stats take the viewer's `tz` query param.
 - API routes that touch household data sit behind the `terms` middleware.
+- Offline: `public/sw.js` caches the app shell and `/build/*` (never `/api`). The Pinia stores cache data in localStorage (`lib/storage.js`); taps made offline wait in `activities.queue` and are flushed on load and on the `online` event. New features must keep a tap working offline.
+- Photos live on the private `local` disk and are served through `/api/entries/{uuid}/photo`; the client compresses before upload.
+- Reminders: `activities.reminder_interval_days` + Web Push (`laravel-notification-channels/webpush`, VAPID keys in `.env`). `catatan:send-reminders` runs hourly, only within `catatan.reminder_hours` (WIB), once per due date (`reminded_at`). Production needs a `schedule:run` cron and PHP `gmp` or `bcmath`.
 - SQLite for local dev and tests, MySQL in production.
 
 ## Commands

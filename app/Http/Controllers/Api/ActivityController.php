@@ -57,6 +57,7 @@ class ActivityController extends Controller
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:80'],
             'icon' => ['sometimes', 'nullable', 'string', 'max:16'],
+            'reminder_interval_days' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:365'],
         ]);
 
         if (isset($data['name'])) {

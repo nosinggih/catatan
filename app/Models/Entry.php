@@ -13,6 +13,8 @@ class Entry extends Model
 
     protected $fillable = ['uuid', 'occurred_at', 'note', 'cost', 'location_name'];
 
+    protected $hidden = ['photo_path'];
+
     protected function casts(): array
     {
         return [

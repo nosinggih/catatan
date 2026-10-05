@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\ConsentController;
 use App\Http\Controllers\Api\EntryController;
+use App\Http\Controllers\Api\EntryPhotoController;
 use App\Http\Controllers\Api\MeController;
+use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\TemplateController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,5 +26,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/entries', [EntryController::class, 'store']);
         Route::patch('/entries/{uuid}', [EntryController::class, 'update'])->whereUuid('uuid');
         Route::delete('/entries/{uuid}', [EntryController::class, 'destroy'])->whereUuid('uuid');
+        Route::post('/entries/{uuid}/photo', [EntryPhotoController::class, 'store'])->whereUuid('uuid');
+        Route::get('/entries/{uuid}/photo', [EntryPhotoController::class, 'show'])->whereUuid('uuid');
+        Route::delete('/entries/{uuid}/photo', [EntryPhotoController::class, 'destroy'])->whereUuid('uuid');
+
+        Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store']);
+        Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
     });
 });
